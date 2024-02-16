@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  db:
+    container_name: db
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: todo-notes
+    ports:
+      - 5432:5432
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: todo-notes
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - 27017:27017
+    volumes:
+      - ./db-data/mongo/:/data/db
+
