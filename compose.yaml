@@ -27,3 +27,13 @@ services:
     volumes:
       - ./db-data/mongo/:/data/db
 
+  backend:
+    container_name: backend
+    image: backend
+    build:
+      context: ./backend
+      dockerfile: backend.dockerfile
+    ports:
+      - 4000:4000
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/todo-notes?schema=public
