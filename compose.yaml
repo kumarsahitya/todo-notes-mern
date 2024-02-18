@@ -36,4 +36,4 @@ services:
     ports:
       - 4000:4000
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/todo-notes?schema=public
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/todo-notes?schema=public

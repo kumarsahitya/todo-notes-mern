@@ -24,7 +24,7 @@ model User {
   email                   String    @unique
   email_verified          Boolean   @default(false)
   email_verify_token      String?
-  phone                   String
+  phone                   String?
   avatar                  String
   password                String
   password_reset_token    String?
@@ -43,7 +43,7 @@ model User {
 //   email                   String    @unique
 //   email_verified          Boolean   @default(false)
 //   email_verify_token      String?
-//   phone                   String
+//   phone                   String?
 //   avatar                  String
 //   password                String
 //   password_reset_token    String?
