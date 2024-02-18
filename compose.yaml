@@ -1,8 +1,8 @@
 version: "3.9"
 
 services:
-  db:
-    container_name: db
+  postgres:
+    container_name: postgres
     image: postgres:14-alpine
     restart: always
     environment:
@@ -19,13 +19,15 @@ services:
     image: mongo:latest
     restart: always
     environment:
-      MONGO_INITDB_DATABASE: todo-notes
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: todo-notes
     ports:
       - 27017:27017
     volumes:
+      - ./data/mongo/001_users.js:/docker-entrypoint-initdb.d/001_users.js:r
       - ./db-data/mongo/:/data/db
+    command: [--auth]
 
   backend:
     container_name: backend
@@ -36,4 +38,7 @@ services:
     ports:
       - 4000:4000
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/todo-notes?schema=public
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo-notes?schema=public
+      - MONGODB_URL=mongodb://admin:password@mongodb:27017/todo-notes?retryWrites=true&w=majority
+    volumes:
+      - /usr/src/app/node_modules

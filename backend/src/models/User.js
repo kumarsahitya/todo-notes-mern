@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
 	password: { type: String, required: true },
 	password_reset_token: { type: String, default: null },
 	reset_token_expired_at: { type: Date, default: null },
-	role: { type: String, enum: ["Admin", "User"], default: "user" },
+	role: { type: String, enum: ["Admin", "User"], default: "User" },
 	active: { type: Boolean, default: true },
 	created_at: { type: Date, default: Date.now },
 	updated_at: { type: Date, default: Date.now },

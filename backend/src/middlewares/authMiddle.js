@@ -18,7 +18,6 @@ exports.auth = (req, res, next) => {
 		try {
 			const decode = jwt.verify(token, process.env.JWT_SECRET);
 			req.user = decode;
-			console.log(req.user);
 		} catch (error) {
 			return res.status(401).json({
 				success: false,
@@ -37,7 +36,6 @@ exports.auth = (req, res, next) => {
 
 exports.isUser = (req, res, next) => {
 	try {
-		console.log(req.user);
 		if (req.user.role !== "User") {
 			return res.status(401).json({
 				success: false,
