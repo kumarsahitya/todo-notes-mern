@@ -16,8 +16,8 @@ enum Role {
   Admin
 }
 
-// User model: Relational
-model User {
+// Users model: Relational
+model Users {
   id                      Int       @id @default(autoincrement())
   first_name              String
   last_name               String
@@ -25,18 +25,18 @@ model User {
   email_verified          Boolean   @default(false)
   email_verify_token      String?
   phone                   String?
-  avatar                  String
+  avatar                  String?
   password                String
   password_reset_token    String?
-  reset_token_expired_at  DateTime
+  reset_token_expired_at  DateTime?
   role                    Role      @default(User)
   active                  Boolean   @default(false)
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 }
 
-// User model: MongoDB
-//  model User {
+// Users model: MongoDB
+//  model Users {
 //   id                      String    @id @default(auto()) @map("_id") @db.ObjectId
 //   first_name              String
 //   last_name               String
@@ -44,10 +44,10 @@ model User {
 //   email_verified          Boolean   @default(false)
 //   email_verify_token      String?
 //   phone                   String?
-//   avatar                  String
+//   avatar                  String?
 //   password                String
 //   password_reset_token    String?
-//   reset_token_expired_at  DateTime
+//   reset_token_expired_at  DateTime?
 //   role                    Role      @default(USER)
 //   active                  Boolean   @default(false)
 //   createdAt               DateTime  @default(now())

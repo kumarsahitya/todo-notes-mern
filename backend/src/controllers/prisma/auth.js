@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const User = require("../models/User");
+const { prisma } = require("../configs/prisma");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendVerificationEmail } = require("./traits/user");
@@ -20,8 +20,8 @@ exports.signup = async (req, res) => {
 		}
 
 		//check if use already exists?
-		// Using mongoose
-		const existingUser = await User.findOne({ email });
+		// Using prisma
+		let existingUser = await prisma.users.findUnique({ where: { email } });
 		if (existingUser) {
 			return res.status(400).json({
 				success: false,
@@ -52,8 +52,8 @@ exports.signup = async (req, res) => {
 			role: "User",
 		};
 
-		// Using mongoose
-		const userInstance = await User.create(userData);
+		// Using prisma
+		const userInstance = await prisma.users.create({ data: userData });
 
 		userInstance.password = undefined;
 		try {
@@ -98,8 +98,8 @@ exports.login = async (req, res) => {
 		}
 
 		//check for registered User
-		// Using mongoose
-		let userInstance = await User.findOne({ email });
+		// Using prisma
+		let userInstance = await prisma.users.findUnique({ where: { email } });
 
 		//if user not registered or not found in database
 		if (!userInstance) {
@@ -144,7 +144,7 @@ exports.login = async (req, res) => {
 			let token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: process.env.JWT_EXPIRES_IN,
 			});
-			userInstance = userInstance.toObject();
+			// userInstance = userInstance.toObject();
 			// userInstance.token = token;
 
 			userInstance.password = undefined;
@@ -190,8 +190,11 @@ exports.confirmation = async (req, res) => {
 		}
 
 		//check for registered User
-		// Using mongoose
-		let userInstance = await User.findOne({ email, email_verify_token: token });
+		// Using prisma
+		let userInstance = await prisma.users.findUnique({
+			where: { email, email_verify_token: token },
+		});
+
 		//if user not registered or not found in database
 		if (!userInstance) {
 			return res.status(401).json({
@@ -207,11 +210,17 @@ exports.confirmation = async (req, res) => {
 			});
 		} else {
 			// change isVerified to true and mark active
-			// Using mongoose
-			userInstance.active = true;
-			userInstance.email_verified = true;
-			userInstance.email_verify_token = null;
-			const updateUser = await userInstance.save();
+			// Using prisma
+			const updateUser = await prisma.users.update({
+				where: {
+					id: userInstance.id,
+				},
+				data: {
+					active: true,
+					email_verified: true,
+					email_verify_token: null,
+				},
+			});
 			if (updateUser) {
 				return res.status(200).json({
 					success: true,

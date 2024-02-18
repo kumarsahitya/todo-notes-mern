@@ -2,27 +2,30 @@ const mailSender = require("../../utils/mailSender");
 
 require("dotenv").config();
 // Define a function to send emails
-exports.sendVerificationEmail = async (req, User) => {
+exports.sendVerificationEmail = async (req, userInstance) => {
 	// Send the email using our custom mailSender Function
 	try {
 		let login_url = "http://" + req.headers.host + "/login/";
 		let action_url =
 			"http://" +
 			req.headers.host +
-			"/confirmation/" +
-			User.email +
+			"/api/v1/auth/confirmation/" +
+			userInstance.email +
 			"/" +
-			User.email_verify_token;
+			userInstance.email_verify_token;
 		const mailResponse = await mailSender(
-			User.email,
+			userInstance.email,
 			"Verification Email",
 			"emailVerification",
 			{
-				...User,
+				first_name: userInstance.first_name,
+				last_name: userInstance.last_name,
+				email: userInstance.email,
 				login_url: login_url,
 				action_url: action_url,
 			}
 		);
+		return mailResponse;
 	} catch (error) {
 		console.log("Error occurred while sending email: ", error);
 		throw error;

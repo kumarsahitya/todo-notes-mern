@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 //Handlers from controllers
-const { login, signup, confirmation } = require("../controllers/auth");
+const { login, signup, confirmation } = require("../controllers/auth"); // API created using mongoose
+// const { login, signup, confirmation } = require("../controllers/prisma/auth"); // API created using prisma
 const { auth, isUser, isAdmin } = require("../middlewares/authMiddle");
 
 router.post("/login", login);
