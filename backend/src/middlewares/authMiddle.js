@@ -4,68 +4,68 @@ require('dotenv').config();
 // auth, isUser, isAdmin
 
 exports.auth = (req, res, next) => {
-    try {
-        // extract JWT token
-        const token = req.body.token || req.cookies.token;
-        if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: 'Token Missing',
-            });
-        }
+	try {
+		// extract JWT token
+		const token = req.body.token || req.cookies.token;
+		if (!token) {
+			return res.status(401).json({
+				success: false,
+				message: 'Token Missing',
+			});
+		}
 
-        // verify the token
-        try {
-            const decode = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = decode;
-        } catch (error) {
-            return res.status(401).json({
-                success: false,
-                message: 'invalid Token',
-            });
-        }
+		// verify the token
+		try {
+			const decode = jwt.verify(token, process.env.JWT_SECRET);
+			req.user = decode;
+		} catch (error) {
+			return res.status(401).json({
+				success: false,
+				message: 'invalid Token',
+			});
+		}
 
-        next();
-    } catch (error) {
-        return res.status(401).json({
-            success: false,
-            message: 'Error Occured in Authentication.',
-        });
-    }
+		next();
+	} catch (error) {
+		return res.status(401).json({
+			success: false,
+			message: 'Error Occured in Authentication.',
+		});
+	}
 };
 
 exports.isUser = (req, res, next) => {
-    try {
-        if (req.user.role !== 'User') {
-            return res.status(401).json({
-                success: false,
-                message: 'You are not authorized User!',
-            });
-        }
+	try {
+		if (req.user.role !== 'User') {
+			return res.status(401).json({
+				success: false,
+				message: 'You are not authorized User!',
+			});
+		}
 
-        next();
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Something error occured: ' + error,
-        });
-    }
+		next();
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: 'Something error occured: ' + error,
+		});
+	}
 };
 
 exports.isAdmin = (req, res, next) => {
-    try {
-        if (req.user.role !== 'Admin') {
-            return res.status(401).json({
-                success: false,
-                message: 'You are not authorized Admin!',
-            });
-        }
+	try {
+		if (req.user.role !== 'Admin') {
+			return res.status(401).json({
+				success: false,
+				message: 'You are not authorized Admin!',
+			});
+		}
 
-        next();
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Something error occured: ' + error,
-        });
-    }
+		next();
+	} catch (error) {
+		return res.status(500).json({
+			success: false,
+			message: 'Something error occured: ' + error,
+		});
+	}
 };
