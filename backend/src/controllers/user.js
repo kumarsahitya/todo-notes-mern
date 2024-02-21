@@ -1,48 +1,27 @@
 const bcrypt = require('bcrypt');
-const { prisma } = require('../configs/prisma');
+const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const logger = require('../../utils/logger');
+const { validationResult } = require('express-validator');
 const { sendVerificationEmail } = require('./traits/user');
+const logger = require('../helpers/logger');
 require('dotenv').config();
 
 // signup handle
 exports.signup = async (req, res) => {
 	try {
+		const errors = validationResult(req);
+
+		// if there is error then return Error
+		if (!errors.isEmpty()) {
+			return res.status(403).json({
+				success: false,
+				errors: errors.array(),
+			});
+		}
+
 		// get input data
 		const { first_name, last_name, email, password, phone } = req.body;
-
-		// Check if All Details are there or not
-		if (!first_name || !last_name || !email || !password) {
-			return res.status(403).send({
-				success: false,
-				message: 'All Fields are required',
-			});
-		}
-
-		// check if use already exists?
-		// Using prisma
-		const existingUser = await prisma.users.findUnique({
-			where: { email },
-		});
-		if (existingUser) {
-			return res.status(400).json({
-				success: false,
-				message: 'User already exists',
-			});
-		}
-
-		// secure password
-		let hashedPassword;
-		try {
-			hashedPassword = await bcrypt.hash(password, 10);
-		} catch (error) {
-			return res.status(500).json({
-				success: false,
-				message:
-					`Hashing pasword error for ${password}: ` + error.message,
-			});
-		}
 
 		// sending email for verification
 		const emailToken = await crypto.randomBytes(16).toString('hex');
@@ -50,14 +29,14 @@ exports.signup = async (req, res) => {
 			first_name,
 			last_name,
 			email,
-			password: hashedPassword,
+			password,
 			phone,
 			email_verify_token: emailToken,
 			role: 'User',
 		};
 
-		// Using prisma
-		const userInstance = await prisma.users.create({ data: userData });
+		// Using mongoose
+		const userInstance = await User.create(userData);
 
 		userInstance.password = undefined;
 		try {
@@ -84,28 +63,29 @@ exports.signup = async (req, res) => {
 		logger.error(error);
 		return res.status(500).json({
 			success: false,
-			message: 'User registration failed',
+			message: `User registration failed: ${error.message}`,
 		});
 	}
 };
 
 exports.login = async (req, res) => {
 	try {
-		// data fetch
-		const { email, password } = req.body;
-		// validation on email and password
-		if (!email || !password) {
-			return res.status(400).json({
+		const errors = validationResult(req);
+
+		// if there is error then return Error
+		if (!errors.isEmpty()) {
+			return res.status(403).json({
 				success: false,
-				message: 'Plz fill all the details carefully',
+				errors: errors.array(),
 			});
 		}
 
+		// data fetch
+		const { email, password } = req.body;
+
 		// check for registered User
-		// Using prisma
-		const userInstance = await prisma.users.findUnique({
-			where: { email },
-		});
+		// Using mongoose
+		let userInstance = await User.findOne({ email });
 
 		// if user not registered or not found in database
 		if (!userInstance) {
@@ -150,7 +130,7 @@ exports.login = async (req, res) => {
 			const token = jwt.sign(payload, process.env.JWT_SECRET, {
 				expiresIn: process.env.JWT_EXPIRES_IN,
 			});
-			// userInstance = userInstance.toObject();
+			userInstance = userInstance.toObject();
 			// userInstance.token = token;
 
 			userInstance.password = undefined;
@@ -158,7 +138,8 @@ exports.login = async (req, res) => {
 				expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
 				httpOnly: true, // It will make cookie not accessible on clinet side -> good way to keep hackers away
 			};
-			res.cookie('token', token, options)
+			res
+				.cookie('token', token, options)
 				.status(200)
 				.json({
 					success: true,
@@ -184,22 +165,25 @@ exports.login = async (req, res) => {
 // It is GET method, you have to write like that
 exports.confirmation = async (req, res) => {
 	try {
-		// data fetch
-		const { email, token } = req.params;
-		// validation on email and password
-		if (!email || !token) {
-			return res.status(400).json({
+		const errors = validationResult(req);
+
+		// if there is error then return Error
+		if (!errors.isEmpty()) {
+			return res.status(403).json({
 				success: false,
-				message: 'In valid request parameters',
+				errors: errors.array(),
 			});
 		}
 
-		// check for registered User
-		// Using prisma
-		const userInstance = await prisma.users.findUnique({
-			where: { email, email_verify_token: token },
-		});
+		// data fetch
+		const { email, token } = req.params;
 
+		// check for registered User
+		// Using mongoose
+		const userInstance = await User.findOne({
+			email,
+			email_verify_token: token,
+		});
 		// if user not registered or not found in database
 		if (!userInstance) {
 			return res.status(401).json({
@@ -215,17 +199,11 @@ exports.confirmation = async (req, res) => {
 			});
 		} else {
 			// change isVerified to true and mark active
-			// Using prisma
-			const updateUser = await prisma.users.update({
-				where: {
-					id: userInstance.id,
-				},
-				data: {
-					active: true,
-					email_verified: true,
-					email_verify_token: null,
-				},
-			});
+			// Using mongoose
+			userInstance.active = true;
+			userInstance.email_verified = true;
+			userInstance.email_verify_token = null;
+			const updateUser = await userInstance.save();
 			if (updateUser) {
 				return res.status(200).json({
 					success: true,

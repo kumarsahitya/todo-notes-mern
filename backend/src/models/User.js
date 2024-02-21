@@ -1,6 +1,8 @@
+const SALT_WORK_FACTOR = 10;
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
-const userSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
 	first_name: { type: String, required: true, default: '', trim: true },
 	last_name: { type: String, required: true, default: '', trim: true },
 	email: { type: String, unique: true, required: true, index: true },
@@ -17,4 +19,29 @@ const userSchema = new mongoose.Schema({
 	updated_at: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('User', userSchema);
+UserSchema.pre('save', function (next) {
+	const user = this;
+
+	if (user.isModified('password') === false) {
+		next();
+	}
+
+	bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
+		if (err) {
+			return next(err);
+		}
+
+		// the new salt hashes the new password
+		bcrypt.hash(user.password, salt, (error, hash) => {
+			if (error) {
+				return next(error);
+			}
+
+			// the clear text password overidden
+			user.password = hash;
+			return next();
+		});
+	});
+});
+
+module.exports = mongoose.model('User', UserSchema);

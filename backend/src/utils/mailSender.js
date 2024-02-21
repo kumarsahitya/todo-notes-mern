@@ -2,7 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const hbs = require('nodemailer-express-handlebars');
 const path = require('path');
-const logger = require('./logger');
+const logger = require('../helpers/logger');
 const viewPath = path.resolve(__dirname, '../templates/views/');
 const partialsPath = path.resolve(__dirname, '../templates/partials');
 

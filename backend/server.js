@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const logger = require('./src/utils/logger');
+const logger = require('./src/helpers/logger');
 
 require('dotenv').config();
 const PORT = process.env.PORT || 4000;
