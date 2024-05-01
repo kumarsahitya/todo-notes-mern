@@ -18,7 +18,9 @@ const singupRules = [
 		.custom(async (value) => {
 			const user = await Models['User'].findOne({ email: value });
 			if (user) {
-				throw new Error('A user already exists with this e-mail address');
+				throw new Error(
+					'A user already exists with this e-mail address',
+				);
 			}
 		}),
 	body('password')
@@ -62,7 +64,9 @@ const confirmationRules = [
 		.withMessage('Email is required')
 		.isEmail()
 		.withMessage('Provide valid email'),
-	param('token').exists({ checkFalsy: true }).withMessage('Token is required'),
+	param('token')
+		.exists({ checkFalsy: true })
+		.withMessage('Token is required'),
 ];
 
 const changePasswordRules = [

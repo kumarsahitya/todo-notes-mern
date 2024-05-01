@@ -154,8 +154,7 @@ exports.login = async (req, res) => {
 			};
 
 			// Sending a success response
-			res
-				.cookie('token', token, options)
+			res.cookie('token', token, options)
 				.status(200)
 				.json({
 					success: true,
@@ -263,7 +262,9 @@ exports.changePassword = async (req, res) => {
 		const { password, new_password } = req.body;
 
 		// Using mongoose: check for registered User
-		let userInstance = await User.findOne({ email: req.loggedInUser.email });
+		let userInstance = await User.findOne({
+			email: req.loggedInUser.email,
+		});
 
 		// if user not registered or not found in database
 		if (!userInstance) {
