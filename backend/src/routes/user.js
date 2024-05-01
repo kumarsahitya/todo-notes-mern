@@ -4,16 +4,23 @@ const {
 	singupRules,
 	loginRules,
 	confirmationRules,
+	changePasswordRules,
 } = require('../validations/user.validation');
 
 // Handlers from controllers
-const { login, signup, confirmation } = require('../controllers/user'); // API created using mongoose
+const {
+	login,
+	signup,
+	confirmation,
+	changePassword,
+} = require('../controllers/user'); // API created using mongoose
 // const { login, signup, confirmation } = require("../controllers/prisma/auth"); // API created using prisma
 const { auth, isUser, isAdmin } = require('../middlewares/authMiddle');
 
 router.post('/login', loginRules, login);
 router.post('/signup', singupRules, signup);
 router.get('/confirmation/:email/:token', confirmationRules, confirmation);
+router.post('/changePassword', auth, changePasswordRules, changePassword);
 
 // testing protected route
 router.get('/test', auth, (req, res) => {

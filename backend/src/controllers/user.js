@@ -7,7 +7,13 @@ const { sendVerificationEmail } = require('./traits/user');
 const logger = require('../helpers/logger');
 require('dotenv').config();
 
-// signup handle
+/**
+ * Handles the signup process for a new user.
+ *
+ * @param {Object} req - The request object containing user data.
+ * @param {Object} res - The response object to send the signup status.
+ * @return {Promise<void>} The function does not return anything.
+ */
 exports.signup = async (req, res) => {
 	try {
 		const errors = validationResult(req);
@@ -23,7 +29,6 @@ exports.signup = async (req, res) => {
 		// get input data
 		const { first_name, last_name, email, password, phone } = req.body;
 
-		// sending email for verification
 		const emailToken = await crypto.randomBytes(16).toString('hex');
 		const userData = {
 			first_name,
@@ -35,9 +40,10 @@ exports.signup = async (req, res) => {
 			role: 'User',
 		};
 
-		// Using mongoose
+		// Using mongoose: to create new user
 		const userInstance = await User.create(userData);
 
+		// sending email for verification
 		userInstance.password = undefined;
 		try {
 			if (await sendVerificationEmail(req, userInstance)) {
@@ -54,12 +60,14 @@ exports.signup = async (req, res) => {
 			});
 		}
 
+		// Sending a success response
 		return res.status(200).json({
 			success: true,
 			message: 'user created successfully.',
 			data: { user: userInstance },
 		});
 	} catch (error) {
+		// Logging & sending an error response
 		logger.error(error);
 		return res.status(500).json({
 			success: false,
@@ -68,6 +76,13 @@ exports.signup = async (req, res) => {
 	}
 };
 
+/**
+ * Logs in a user.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @return {Promise<void>} The function does not return anything.
+ */
 exports.login = async (req, res) => {
 	try {
 		const errors = validationResult(req);
@@ -83,8 +98,7 @@ exports.login = async (req, res) => {
 		// data fetch
 		const { email, password } = req.body;
 
-		// check for registered User
-		// Using mongoose
+		// Using mongoose: check for registered User
 		let userInstance = await User.findOne({ email });
 
 		// if user not registered or not found in database
@@ -138,12 +152,14 @@ exports.login = async (req, res) => {
 				expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
 				httpOnly: true, // It will make cookie not accessible on clinet side -> good way to keep hackers away
 			};
+
+			// Sending a success response
 			res
 				.cookie('token', token, options)
 				.status(200)
 				.json({
 					success: true,
-					message: 'Logged in Successfully.',
+					message: 'Your password has been changed Successfully.',
 					data: { token, user: userInstance },
 				});
 		} else {
@@ -154,6 +170,7 @@ exports.login = async (req, res) => {
 			});
 		}
 	} catch (error) {
+		// Logging & sending an error response
 		logger.error(error);
 		res.status(500).json({
 			success: false,
@@ -162,7 +179,13 @@ exports.login = async (req, res) => {
 	}
 };
 
-// It is GET method, you have to write like that
+/**
+ * Handles the email verification process for a user.
+ *
+ * @param {Object} req - The request object containing email and token parameters.
+ * @param {Object} res - The response object to send the verification status.
+ * @return {Promise<void>} The function does not return anything.
+ */
 exports.confirmation = async (req, res) => {
 	try {
 		const errors = validationResult(req);
@@ -178,8 +201,7 @@ exports.confirmation = async (req, res) => {
 		// data fetch
 		const { email, token } = req.params;
 
-		// check for registered User
-		// Using mongoose
+		// Using mongoose: check for registered User
 		const userInstance = await User.findOne({
 			email,
 			email_verify_token: token,
@@ -198,8 +220,7 @@ exports.confirmation = async (req, res) => {
 				message: 'Your email has been already verified. Please Login',
 			});
 		} else {
-			// change isVerified to true and mark active
-			// Using mongoose
+			// Using mongoose: change isVerified to true and mark active
 			userInstance.active = true;
 			userInstance.email_verified = true;
 			userInstance.email_verify_token = null;
@@ -217,10 +238,79 @@ exports.confirmation = async (req, res) => {
 			}
 		}
 	} catch (error) {
+		// Logging & sending an error response
 		logger.error(error);
 		res.status(500).json({
 			success: false,
 			message: `Email Verification failed: ${error.message}`,
+		});
+	}
+};
+
+exports.changePassword = async (req, res) => {
+	try {
+		const errors = validationResult(req);
+
+		// if there is error then return Error
+		if (!errors.isEmpty()) {
+			return res.status(403).json({
+				success: false,
+				errors: errors.array(),
+			});
+		}
+
+		// data fetch
+		const { password, new_password } = req.body;
+
+		// Using mongoose: check for registered User
+		let userInstance = await User.findOne({ email: req.loggedInUser.email });
+
+		// if user not registered or not found in database
+		if (!userInstance) {
+			return res.status(401).json({
+				success: false,
+				message: 'You have to Signup First',
+			});
+		}
+
+		// validate user is active and verified email
+		if (!userInstance.active) {
+			return res.status(401).json({
+				success: false,
+				message:
+					'You account has been inactive. Please contact admin or verify email address first',
+			});
+		}
+
+		// verify password and generate a JWt token 🔎
+		if (await bcrypt.compare(password, userInstance.password)) {
+			// if password matched
+			// now lets change it to new password & save it to database
+			userInstance.password = new_password;
+			await userInstance.save();
+
+			userInstance = userInstance.toObject();
+			userInstance.password = undefined;
+
+			// Sending a success response
+			res.status(200).json({
+				success: true,
+				message: 'Logged in Successfully.',
+				data: { user: userInstance },
+			});
+		} else {
+			// password donot matched
+			return res.status(403).json({
+				success: false,
+				message: 'Password incorrects!',
+			});
+		}
+	} catch (error) {
+		// Logging & sending an error response
+		logger.error(error);
+		res.status(500).json({
+			success: false,
+			message: `Change Password failed: ${error.message}`,
 		});
 	}
 };

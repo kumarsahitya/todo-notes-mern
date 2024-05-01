@@ -35,3 +35,10 @@ $ docker exec -it backend
 $ npx prisma migrate dev --name init
 
 ```
+### Docker commands for build image and start
+```bash
+# build & start docker compose
+$ docker-compose up -d --build
+
+# only start docker compose
+$ docker-compose up -d

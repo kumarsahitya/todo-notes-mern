@@ -1,12 +1,15 @@
 const jwt = require('jsonwebtoken');
+const logger = require('../helpers/logger');
+const User = require('../models/User');
 require('dotenv').config();
 
 // auth, isUser, isAdmin
 
-exports.auth = (req, res, next) => {
+exports.auth = async (req, res, next) => {
 	try {
 		// extract JWT token
-		const token = req.body.token || req.cookies.token;
+		let token = req.header('Authorization');
+
 		if (!token) {
 			return res.status(401).json({
 				success: false,
@@ -14,10 +17,15 @@ exports.auth = (req, res, next) => {
 			});
 		}
 
+		token = token.split(' ')[1]; // Remove Bearer from string
+		if (token === 'null' || !token)
+			return res.status(401).send('Unauthorized request');
+
 		// verify the token
 		try {
 			const decode = jwt.verify(token, process.env.JWT_SECRET);
-			req.user = decode;
+			const user = await User.findById(decode.id);
+			req.loggedInUser = user;
 		} catch (error) {
 			return res.status(401).json({
 				success: false,
@@ -27,6 +35,7 @@ exports.auth = (req, res, next) => {
 
 		next();
 	} catch (error) {
+		logger.error(error);
 		return res.status(401).json({
 			success: false,
 			message: 'Error Occured in Authentication.',
@@ -36,7 +45,7 @@ exports.auth = (req, res, next) => {
 
 exports.isUser = (req, res, next) => {
 	try {
-		if (req.user.role !== 'User') {
+		if (req.loggedInUser.role !== 'User') {
 			return res.status(401).json({
 				success: false,
 				message: 'You are not authorized User!',
@@ -54,7 +63,7 @@ exports.isUser = (req, res, next) => {
 
 exports.isAdmin = (req, res, next) => {
 	try {
-		if (req.user.role !== 'Admin') {
+		if (req.loggedInUser.role !== 'Admin') {
 			return res.status(401).json({
 				success: false,
 				message: 'You are not authorized Admin!',
