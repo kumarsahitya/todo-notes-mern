@@ -93,6 +93,15 @@ const changePasswordRules = [
 		.custom((value, { req }) => value === req.body.new_password)
 		.withMessage('The passwords do not match'),
 ];
+
+const forgotPasswordRules = [
+	param('email')
+		.exists({ checkFalsy: true })
+		.withMessage('Email is required')
+		.isEmail()
+		.withMessage('Provide valid email'),
+];
+
 module.exports = {
 	singupRules,
 	loginRules,

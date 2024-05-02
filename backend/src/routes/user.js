@@ -5,6 +5,7 @@ const {
 	loginRules,
 	confirmationRules,
 	changePasswordRules,
+	forgotPasswordRules,
 } = require('../validations/user.validation');
 
 // Handlers from controllers
@@ -13,6 +14,7 @@ const {
 	signup,
 	confirmation,
 	changePassword,
+	forgotPassword,
 } = require('../controllers/user'); // API created using mongoose
 // const { login, signup, confirmation } = require("../controllers/prisma/auth"); // API created using prisma
 const { auth, isUser, isAdmin } = require('../middlewares/authMiddle');
@@ -20,6 +22,7 @@ const { auth, isUser, isAdmin } = require('../middlewares/authMiddle');
 router.post('/login', loginRules, login);
 router.post('/signup', singupRules, signup);
 router.get('/confirmation/:email/:token', confirmationRules, confirmation);
+router.post('/forgotPassword', forgotPasswordRules, forgotPassword);
 router.post('/changePassword', auth, changePasswordRules, changePassword);
 
 // testing protected route

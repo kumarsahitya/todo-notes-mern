@@ -246,6 +246,13 @@ exports.confirmation = async (req, res) => {
 	}
 };
 
+/**
+ * Handles the change password process for a user.
+ *
+ * @param {Object} req - The request object containing user data.
+ * @param {Object} res - The response object to send the password change status.
+ * @return {Promise<void>} The function does not return anything.
+ */
 exports.changePassword = async (req, res) => {
 	try {
 		const errors = validationResult(req);
@@ -312,6 +319,57 @@ exports.changePassword = async (req, res) => {
 		res.status(500).json({
 			success: false,
 			message: `Change Password failed: ${error.message}`,
+		});
+	}
+};
+
+/**
+ * Handles the forgot password process for a user.
+ *
+ * @param {Object} req - The request object containing user data.
+ * @param {Object} res - The response object to send the password reset status.
+ * @return {Promise<void>} The function does not return anything.
+ */
+exports.forgotPassword = async (req, res) => {
+	try {
+		const errors = validationResult(req);
+
+		// if there is error then return Error
+		if (!errors.isEmpty()) {
+			return res.status(403).json({
+				success: false,
+				errors: errors.array(),
+			});
+		}
+
+		// data fetch
+		const { email } = req.body;
+
+		// Using mongoose: check for registered User
+		let userInstance = await User.findOne({ email });
+
+		// if user not registered or not found in database
+		if (!userInstance) {
+			return res.status(401).json({
+				success: false,
+				message: 'You have to Signup First',
+			});
+		}
+
+		// validate user is active and verified email
+		if (!userInstance.active) {
+			return res.status(401).json({
+				success: false,
+				message:
+					'You account has been inactive. Please contact admin or verify email address first',
+			});
+		}
+	} catch (error) {
+		// Logging & sending an error response
+		logger.error(error);
+		res.status(500).json({
+			success: false,
+			message: `Forgot Password failed: ${error.message}`,
 		});
 	}
 };
