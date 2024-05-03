@@ -1,9 +1,13 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
+const Token = require('../models/Token');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { validationResult } = require('express-validator');
-const { sendVerificationEmail } = require('./traits/user');
+const {
+	sendVerificationEmail,
+	sendResetPasswordEmail,
+} = require('./traits/user');
 const logger = require('../helpers/logger');
 require('dotenv').config();
 
@@ -364,6 +368,35 @@ exports.forgotPassword = async (req, res) => {
 					'You account has been inactive. Please contact admin or verify email address first',
 			});
 		}
+
+		// find token if exist, delete it, then create a new one
+		let token = await Token.findOne({ userId: user._id });
+		if (token) await token.deleteOne();
+		let resetToken = crypto.randomBytes(32).toString('hex');
+		const hash = await bcrypt.hash(resetToken, Number(bcryptSalt));
+
+		await new Token({
+			userId: userInstance._id,
+			token: hash,
+			createdAt: Date.now(),
+		}).save();
+
+		const link = `${clientURL}/passwordReset/${userInstance._id}/${resetToken}`;
+		sendEmail(
+			user.email,
+			'Password Reset Request',
+			{ name: user.name, link: link },
+			'./template/requestResetPassword.handlebars',
+		);
+		try {
+			await sendResetPasswordEmail(req, userInstance, resetToken);
+		} catch (error) {}
+		return res.status(401).json({
+			success: false,
+			message:
+				'Unable to login into your account. Please verify email address first',
+		});
+		return link;
 	} catch (error) {
 		// Logging & sending an error response
 		logger.error(error);
