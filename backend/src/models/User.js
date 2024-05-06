@@ -1,4 +1,3 @@
-const SALT_WORK_FACTOR = 10;
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
@@ -26,7 +25,7 @@ UserSchema.pre('save', function (next) {
 		next();
 	}
 
-	bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
+	bcrypt.genSalt(process.env.BCRYPT_SALT, (err, salt) => {
 		if (err) {
 			return next(err);
 		}

@@ -307,7 +307,7 @@ exports.changePassword = async (req, res) => {
 			// Sending a success response
 			res.status(200).json({
 				success: true,
-				message: 'Logged in Successfully.',
+				message: 'Your password has been changes Successfully.',
 				data: { user: userInstance },
 			});
 		} else {
@@ -327,13 +327,6 @@ exports.changePassword = async (req, res) => {
 	}
 };
 
-/**
- * Handles the forgot password process for a user.
- *
- * @param {Object} req - The request object containing user data.
- * @param {Object} res - The response object to send the password reset status.
- * @return {Promise<void>} The function does not return anything.
- */
 exports.forgotPassword = async (req, res) => {
 	try {
 		const errors = validationResult(req);
@@ -370,33 +363,32 @@ exports.forgotPassword = async (req, res) => {
 		}
 
 		// find token if exist, delete it, then create a new one
-		let token = await Token.findOne({ userId: user._id });
+		let token = await Token.findOne({ userId: userInstance._id });
 		if (token) await token.deleteOne();
 		let resetToken = crypto.randomBytes(32).toString('hex');
-		const hash = await bcrypt.hash(resetToken, Number(bcryptSalt));
+		const hash = await bcrypt.hash(
+			resetToken,
+			Number(process.env.BCRYPT_SALT),
+		);
 
+		// save new token in database and send email
 		await new Token({
 			userId: userInstance._id,
 			token: hash,
 			createdAt: Date.now(),
 		}).save();
 
-		const link = `${clientURL}/passwordReset/${userInstance._id}/${resetToken}`;
-		sendEmail(
-			user.email,
-			'Password Reset Request',
-			{ name: user.name, link: link },
-			'./template/requestResetPassword.handlebars',
-		);
 		try {
 			await sendResetPasswordEmail(req, userInstance, resetToken);
-		} catch (error) {}
-		return res.status(401).json({
-			success: false,
-			message:
-				'Unable to login into your account. Please verify email address first',
+		} catch (error) {
+			throw error;
+		}
+
+		// Sending a success response
+		res.status(200).json({
+			success: true,
+			message: 'Password reset link sent to your email account.',
 		});
-		return link;
 	} catch (error) {
 		// Logging & sending an error response
 		logger.error(error);

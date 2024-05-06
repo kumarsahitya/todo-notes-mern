@@ -95,7 +95,7 @@ const changePasswordRules = [
 ];
 
 const forgotPasswordRules = [
-	param('email')
+	body('email')
 		.exists({ checkFalsy: true })
 		.withMessage('Email is required')
 		.isEmail()
@@ -107,4 +107,5 @@ module.exports = {
 	loginRules,
 	confirmationRules,
 	changePasswordRules,
+	forgotPasswordRules,
 };
