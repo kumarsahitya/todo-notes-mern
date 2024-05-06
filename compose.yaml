@@ -23,7 +23,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: todo-notes
     ports:
-      - 27017:27017
+      - 27018:27017
     volumes:
       - ./data/mongo/001_users.js:/docker-entrypoint-initdb.d/001_users.js:r
       - ./db-data/mongo/:/data/db
@@ -39,6 +39,6 @@ services:
       - 4000:4000
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/todo-notes?schema=public
-      - MONGODB_URL=mongodb://admin:password@mongodb:27017/todo-notes?retryWrites=true&w=majority
+      - MONGODB_URL=mongodb://admin:password@mongodb:27018/todo-notes?retryWrites=true&w=majority
     volumes:
       - /usr/src/app/node_modules

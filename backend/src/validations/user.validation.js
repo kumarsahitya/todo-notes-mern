@@ -1,5 +1,7 @@
 const Models = require('../models');
 const { body, param } = require('express-validator');
+const ObjectId = require('mongodb').ObjectId;
+
 const singupRules = [
 	body('first_name')
 		.exists({ checkFalsy: true })
@@ -102,10 +104,35 @@ const forgotPasswordRules = [
 		.withMessage('Provide valid email'),
 ];
 
+const resetPasswordRules = [
+	body('userId')
+		.customSanitizer((value) => new ObjectId(value))
+		.custom(async (value) => {
+			const user = await Models['User'].findById(new ObjectId(value));
+			if (!user) {
+				throw new Error('Invalid user id');
+			}
+		}),
+	body('token').exists({ checkFalsy: true }).withMessage('Token is required'),
+	body('password')
+		.exists({ checkFalsy: true })
+		.withMessage('New Password is required')
+		.isString()
+		.withMessage('New Password should be string')
+		.isStrongPassword({
+			minlength: 8,
+			minLowercase: 1,
+			minUppercase: 1,
+			minNumbers: 1,
+			minSymbols: 1,
+		}),
+];
+
 module.exports = {
 	singupRules,
 	loginRules,
 	confirmationRules,
 	changePasswordRules,
 	forgotPasswordRules,
+	resetPasswordRules,
 };

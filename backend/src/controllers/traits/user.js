@@ -14,6 +14,7 @@ require('dotenv').config();
 exports.sendVerificationEmail = async (req, userInstance) => {
 	// Send the email using our custom mailSender Function
 	try {
+		// TODO: Change action url to be front-end url
 		const login_url = 'http://' + req.headers.host + '/login/';
 		const action_url =
 			'http://' +
@@ -42,7 +43,7 @@ exports.sendVerificationEmail = async (req, userInstance) => {
 };
 
 /**
- * Sends a reset password email to the user.
+ * Sends a request reset password email to the user.
  *
  * @param {Object} req - The request object.
  * @param {Object} userInstance - The user instance.
@@ -50,14 +51,19 @@ exports.sendVerificationEmail = async (req, userInstance) => {
  * @return {Promise<Object>} The response from the mailSender function.
  * @throws {Error} If an error occurs while sending the email.
  */
-exports.sendResetPasswordEmail = async (req, userInstance, resetToken) => {
+exports.sendRequestResetPasswordEmail = async (
+	req,
+	userInstance,
+	resetToken,
+) => {
 	// Send the email using our custom mailSender Function
 	try {
+		// TODO: Change action url to be front-end url
 		const login_url = 'http://' + req.headers.host + '/login/';
 		const action_url =
 			'http://' +
 			req.headers.host +
-			'/api/v1/auth/passwordReset/' +
+			'/api/v1/auth/resetPassword/' +
 			userInstance._id +
 			'/' +
 			resetToken;
@@ -65,6 +71,39 @@ exports.sendResetPasswordEmail = async (req, userInstance, resetToken) => {
 			userInstance.email,
 			'Password Reset Request',
 			'requestResetPassword',
+			{
+				first_name: userInstance.first_name,
+				last_name: userInstance.last_name,
+				email: userInstance.email,
+				login_url,
+				action_url,
+			},
+		);
+		return mailResponse;
+	} catch (error) {
+		logger.error('Error occurred while sending email: ', error);
+		throw error;
+	}
+};
+
+/**
+ * Sends a reset password email to the user.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} userInstance - The user instance.
+ * @return {Promise<Object>} The response from the mailSender function.
+ * @throws {Error} If an error occurs while sending the email.
+ */
+exports.sendResetPasswordEmail = async (req, userInstance) => {
+	// Send the email using our custom mailSender Function
+	try {
+		// TODO: Change action url to be front-end url
+		const login_url = 'http://' + req.headers.host + '/login/';
+		const action_url = login_url;
+		const mailResponse = await mailSender(
+			userInstance.email,
+			'Password Reset Successfully',
+			'resetPassword',
 			{
 				first_name: userInstance.first_name,
 				last_name: userInstance.last_name,

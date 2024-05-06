@@ -25,7 +25,7 @@ UserSchema.pre('save', function (next) {
 		next();
 	}
 
-	bcrypt.genSalt(process.env.BCRYPT_SALT, (err, salt) => {
+	bcrypt.genSalt(Number(process.env.BCRYPT_SALT), (err, salt) => {
 		if (err) {
 			return next(err);
 		}

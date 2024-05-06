@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { validationResult } = require('express-validator');
 const {
 	sendVerificationEmail,
+	sendRequestResetPasswordEmail,
 	sendResetPasswordEmail,
 } = require('./traits/user');
 const logger = require('../helpers/logger');
@@ -327,6 +328,13 @@ exports.changePassword = async (req, res) => {
 	}
 };
 
+/**
+ * Handles the forgot password process for a user.
+ *
+ * @param {Object} req - The request object containing user data.
+ * @param {Object} res - The response object to send the forgot password status.
+ * @return {Promise<void>} The function does not return anything.
+ */
 exports.forgotPassword = async (req, res) => {
 	try {
 		const errors = validationResult(req);
@@ -379,7 +387,7 @@ exports.forgotPassword = async (req, res) => {
 		}).save();
 
 		try {
-			await sendResetPasswordEmail(req, userInstance, resetToken);
+			await sendRequestResetPasswordEmail(req, userInstance, resetToken);
 		} catch (error) {
 			throw error;
 		}
@@ -388,6 +396,79 @@ exports.forgotPassword = async (req, res) => {
 		res.status(200).json({
 			success: true,
 			message: 'Password reset link sent to your email account.',
+		});
+	} catch (error) {
+		// Logging & sending an error response
+		logger.error(error);
+		res.status(500).json({
+			success: false,
+			message: `Forgot Password failed: ${error.message}`,
+		});
+	}
+};
+
+/**
+ * Resets the password for a user.
+ *
+ * @param {Object} req - The request object containing user data.
+ * @param {Object} res - The response object to send the password reset status.
+ * @return {Promise<void>} The function does not return anything.
+ */
+exports.resetPassword = async (req, res) => {
+	try {
+		const errors = validationResult(req);
+
+		// if there is error then return Error
+		if (!errors.isEmpty()) {
+			return res.status(403).json({
+				success: false,
+				errors: errors.array(),
+			});
+		}
+
+		// data fetch
+		const { userId, token, password } = req.body;
+
+		// Using mongoose: check for registered User
+		let userInstance = await User.findOne({ _id: userId });
+
+		// if user not registered or not found in database
+		if (!userInstance) {
+			return res.status(401).json({
+				success: false,
+				message: 'You have to Signup First',
+			});
+		}
+
+		// fetch token by userId and validate it
+		let resetPasswordToken = await Token.findOne({ userId });
+		if (!resetPasswordToken) {
+			return res.status(401).json({
+				success: false,
+				message: 'Invalid or expired password reset token',
+			});
+		}
+		const isValid = await bcrypt.compare(token, resetPasswordToken.token);
+		if (!isValid) {
+			return res.status(401).json({
+				success: false,
+				message: 'Invalid or expired password reset token',
+			});
+		}
+
+		userInstance.password = password;
+		await userInstance.save();
+
+		try {
+			await sendResetPasswordEmail(req, userInstance);
+		} catch (error) {
+			throw error;
+		}
+
+		// Sending a success response
+		res.status(200).json({
+			success: true,
+			message: 'Password reset sucessfully.',
 		});
 	} catch (error) {
 		// Logging & sending an error response

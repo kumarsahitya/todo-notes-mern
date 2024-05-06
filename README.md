@@ -7,7 +7,7 @@ Todo Notes full stack application with MongoDB, NodeJs, ExpressJs, NextJs/ReactJ
 $ docker exec -it mongodb bash
 
 # log into mongodb database
-$ mongosh mongodb://root:password@mongodb:27017/
+$ mongosh mongodb://root:password@mongodb:27018/
 
 # move to database
 $ use todo-notes
