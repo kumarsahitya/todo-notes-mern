@@ -479,3 +479,33 @@ exports.resetPassword = async (req, res) => {
 		});
 	}
 };
+
+exports.profile = async (req, res) => {
+	try {
+		// Using mongoose: check for registered User
+		let userInstance = await User.findOne({
+			email: req.loggedInUser.email,
+		});
+
+		// if user not registered or not found in database
+		if (!userInstance) {
+			return res.status(401).json({
+				success: false,
+				message: 'You have to Signup First',
+			});
+		}
+
+		// Sending a success response
+		res.status(200).json({
+			success: true,
+			message: 'Profile fetch sucessfully.',
+		});
+	} catch (error) {
+		// Logging & sending an error response
+		logger.error(error);
+		res.status(500).json({
+			success: false,
+			message: `Forgot Password failed: ${error.message}`,
+		});
+	}
+};

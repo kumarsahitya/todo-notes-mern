@@ -17,6 +17,7 @@ const {
 	changePassword,
 	forgotPassword,
 	resetPassword,
+	profile,
 } = require('../controllers/user'); // API created using mongoose
 // const { login, signup, confirmation } = require("../controllers/prisma/auth"); // API created using prisma
 const { auth, isUser, isAdmin } = require('../middlewares/authMiddle');
@@ -27,6 +28,7 @@ router.get('/confirmation/:email/:token', confirmationRules, confirmation);
 router.post('/forgotPassword', forgotPasswordRules, forgotPassword);
 router.post('/resetPassword', resetPasswordRules, resetPassword);
 router.post('/changePassword', auth, changePasswordRules, changePassword);
+router.get('/profile', auth, profile);
 
 // testing protected route
 router.get('/test', auth, (req, res) => {
