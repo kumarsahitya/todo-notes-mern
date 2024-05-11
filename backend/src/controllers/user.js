@@ -480,6 +480,13 @@ exports.resetPassword = async (req, res) => {
 	}
 };
 
+/**
+ * Retrieves the profile of a registered user.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @return {Promise<void>} The promise that resolves when the profile is retrieved successfully or rejects with an error.
+ */
 exports.profile = async (req, res) => {
 	try {
 		// Using mongoose: check for registered User
@@ -494,11 +501,13 @@ exports.profile = async (req, res) => {
 				message: 'You have to Signup First',
 			});
 		}
+		userInstance.password = undefined;
 
 		// Sending a success response
 		res.status(200).json({
 			success: true,
 			message: 'Profile fetch sucessfully.',
+			data: { user: userInstance },
 		});
 	} catch (error) {
 		// Logging & sending an error response
