@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Token = require('../models/Token');
+const UserAttribute = require('../models/UserAttribute');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { validationResult } = require('express-validator');
@@ -41,17 +42,31 @@ exports.signup = async (req, res) => {
 			email,
 			password,
 			phone,
-			email_verify_token: emailToken,
 			role: 'User',
 		};
 
 		// Using mongoose: to create new user
-		const userInstance = await User.create(userData);
+		let userInstance = await User.create(userData);
+		let userAttributeInstance = null;
+
+		// save user attributes
+		if (!userInstance) {
+			var attributeObj = {
+				user_id: userInstance._id,
+				email_verify_token: emailToken,
+				date_agreed_to_terms_of_service: new Date(),
+			};
+			let userAttributeInstance = await UserAttribute.create(attributeObj);
+			userInstance.user_attribute_id = userAttributeInstance._id;
+			await userInstance.save();
+		}
 
 		// sending email for verification
 		userInstance.password = undefined;
 		try {
-			if (await sendVerificationEmail(req, userInstance)) {
+			if (
+				await sendVerificationEmail(req, userInstance, userAttributeInstance)
+			) {
 				return res.status(200).json({
 					success: true,
 					message: `A verification email has been sent to ${userInstance.email}.`,
@@ -122,12 +137,28 @@ exports.login = async (req, res) => {
 					'You account has been inactive. Please contact admin or verify email address first',
 			});
 		}
-		if (!userInstance.email_verified) {
+
+		// get user attributes
+		let userAttributeInstance = await UserAttribute.findOne({
+			user_id: userInstance._id,
+		});
+
+		// if user attribute not found in database
+		if (!userAttributeInstance) {
+			var attributeObj = {
+				user_id: userInstance._id,
+			};
+			let userAttributeInstance = await UserAttribute.create(attributeObj);
+			userInstance.user_attribute_id = userAttributeInstance._id;
+			await userInstance.save();
+		}
+
+		if (!userAttributeInstance.email_verified) {
 			try {
 				const emailToken = await crypto.randomBytes(16).toString('hex');
-				userInstance.email_verify_token = emailToken;
-				if (await userInstance.save()) {
-					await sendVerificationEmail(req, userInstance);
+				userAttributeInstance.email_verify_token = emailToken;
+				if (await userAttributeInstance.save()) {
+					await sendVerificationEmail(req, userInstance, userAttributeInstance);
 				}
 			} catch (error) {}
 			return res.status(401).json({
@@ -159,7 +190,8 @@ exports.login = async (req, res) => {
 			};
 
 			// Sending a success response
-			res.cookie('token', token, options)
+			res
+				.cookie('token', token, options)
 				.status(200)
 				.json({
 					success: true,
@@ -208,8 +240,14 @@ exports.confirmation = async (req, res) => {
 		// Using mongoose: check for registered User
 		const userInstance = await User.findOne({
 			email,
+		});
+
+		// get user attributes
+		let userAttributeInstance = await UserAttribute.findOne({
+			user_id: userInstance._id,
 			email_verify_token: token,
 		});
+
 		// if user not registered or not found in database
 		if (!userInstance) {
 			return res.status(401).json({
@@ -218,17 +256,20 @@ exports.confirmation = async (req, res) => {
 			});
 		}
 		// user is already verified
-		else if (userInstance.email_verified) {
+		else if (userAttributeInstance.email_verified) {
 			return res.status(200).json({
 				success: true,
 				message: 'Your email has been already verified. Please Login',
 			});
 		} else {
 			// Using mongoose: change isVerified to true and mark active
+			userAttributeInstance.email_verified = true;
+			userAttributeInstance.email_verify_token = null;
+			await userAttributeInstance.save();
+
 			userInstance.active = true;
-			userInstance.email_verified = true;
-			userInstance.email_verify_token = null;
 			const updateUser = await userInstance.save();
+
 			if (updateUser) {
 				return res.status(200).json({
 					success: true,
@@ -374,10 +415,7 @@ exports.forgotPassword = async (req, res) => {
 		let token = await Token.findOne({ userId: userInstance._id });
 		if (token) await token.deleteOne();
 		let resetToken = crypto.randomBytes(32).toString('hex');
-		const hash = await bcrypt.hash(
-			resetToken,
-			Number(process.env.BCRYPT_SALT),
-		);
+		const hash = await bcrypt.hash(resetToken, Number(process.env.BCRYPT_SALT));
 
 		// save new token in database and send email
 		await new Token({

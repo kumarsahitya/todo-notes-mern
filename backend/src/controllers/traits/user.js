@@ -8,10 +8,15 @@ require('dotenv').config();
  *
  * @param {Object} req - The request object.
  * @param {Object} userInstance - The user instance.
+ * @param {Object} userAttributeInstance - The user attribute instance.
  * @return {Promise<Object>} The response from the mailSender function.
  * @throws {Error} If an error occurs while sending the email.
  */
-exports.sendVerificationEmail = async (req, userInstance) => {
+exports.sendVerificationEmail = async (
+	req,
+	userInstance,
+	userAttributeInstance
+) => {
 	// Send the email using our custom mailSender Function
 	try {
 		// TODO: Change action url to be front-end url
@@ -22,7 +27,7 @@ exports.sendVerificationEmail = async (req, userInstance) => {
 			'/api/v1/auth/confirmation/' +
 			userInstance.email +
 			'/' +
-			userInstance.email_verify_token;
+			userAttributeInstance.email_verify_token;
 		const mailResponse = await mailSender(
 			userInstance.email,
 			'Verification Email',
@@ -33,7 +38,7 @@ exports.sendVerificationEmail = async (req, userInstance) => {
 				email: userInstance.email,
 				login_url,
 				action_url,
-			},
+			}
 		);
 		return mailResponse;
 	} catch (error) {
@@ -54,7 +59,7 @@ exports.sendVerificationEmail = async (req, userInstance) => {
 exports.sendRequestResetPasswordEmail = async (
 	req,
 	userInstance,
-	resetToken,
+	resetToken
 ) => {
 	// Send the email using our custom mailSender Function
 	try {
@@ -77,7 +82,7 @@ exports.sendRequestResetPasswordEmail = async (
 				email: userInstance.email,
 				login_url,
 				action_url,
-			},
+			}
 		);
 		return mailResponse;
 	} catch (error) {
@@ -110,7 +115,7 @@ exports.sendResetPasswordEmail = async (req, userInstance) => {
 				email: userInstance.email,
 				login_url,
 				action_url,
-			},
+			}
 		);
 		return mailResponse;
 	} catch (error) {
