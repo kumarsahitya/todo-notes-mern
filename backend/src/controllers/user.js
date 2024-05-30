@@ -51,6 +51,8 @@ module.exports = {
 
 			let userAttributeInstance =
 				await module.exports.createUserAttributeInstance(userInstance);
+			userAttributeInstance.email_verify_token = emailToken;
+			await userAttributeInstance.save();
 
 			// sending email for verification
 			userInstance.password = undefined;
