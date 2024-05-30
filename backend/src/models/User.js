@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const UserSchema = new mongoose.Schema({
+	user_attribute_id: { type: mongoose.Schema.ObjectId, ref: 'UserAttribute' },
 	first_name: { type: String, required: true, default: '', trim: true },
 	last_name: { type: String, required: true, default: '', trim: true },
 	email: { type: String, unique: true, required: true, index: true },
@@ -15,7 +16,6 @@ const UserSchema = new mongoose.Schema({
 	created_at: { type: Date, default: Date.now },
 	updated_at: { type: Date, default: Date.now },
 	deleted_at: { type: Date, default: null },
-	user_attribute_id: { type: mongoose.Schema.ObjectId, ref: 'UserAttribute' },
 });
 
 UserSchema.pre('save', function (next) {
