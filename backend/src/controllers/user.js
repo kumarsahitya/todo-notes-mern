@@ -24,8 +24,6 @@ module.exports = {
 	signup: async (req, res) => {
 		try {
 			const errors = validationResult(req);
-
-			// if there is error then return Error
 			if (!errors.isEmpty()) {
 				return res.status(403).json({
 					success: false,
@@ -33,24 +31,10 @@ module.exports = {
 				});
 			}
 
-			// get input data
-			const { first_name, last_name, email, password, phone } = req.body;
-
-			const emailToken = await crypto.randomBytes(16).toString('hex');
-			const userData = {
-				first_name,
-				last_name,
-				email,
-				password,
-				phone,
-				role: 'User',
-			};
-
-			// Using mongoose: to create new user
-			let userInstance = await User.create(userData);
-
+			let userInstance = await module.exports.createUser(req);
 			let userAttributeInstance =
 				await module.exports.createUserAttributeInstance(userInstance);
+			const emailToken = await crypto.randomBytes(16).toString('hex');
 			userAttributeInstance.email_verify_token = emailToken;
 			await userAttributeInstance.save();
 
@@ -60,11 +44,7 @@ module.exports = {
 			// sending email for verification
 			try {
 				if (
-					await sendVerificationEmail(
-						req,
-						userInstance,
-						userAttributeInstance,
-					)
+					await sendVerificationEmail(req, userInstance, userAttributeInstance)
 				) {
 					return res.status(200).json({
 						success: true,
@@ -73,10 +53,11 @@ module.exports = {
 					});
 				}
 			} catch (error) {
-				return res.status(500).json({
-					success: false,
-					message: `Error occurred while sending email: ${error.message}`,
-				});
+				return await module.exports.logError(
+					error,
+					`Error occurred while sending email: ${error.message}`,
+					res
+				);
 			}
 
 			// Sending a success response
@@ -86,12 +67,11 @@ module.exports = {
 				data: { user: userInstance },
 			});
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			return res.status(500).json({
-				success: false,
-				message: `User registration failed: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`User registration failed: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -145,15 +125,14 @@ module.exports = {
 					req,
 					res,
 					userInstance,
-					userAttributeInstance,
+					userAttributeInstance
 				);
 			}
 			// verify password and generate a JWt token 🔎
 			if (await bcrypt.compare(password, userInstance.password)) {
 				// if password matched
 				// now lets create a JWT token
-				const token =
-					await module.exports.generateJwtToken(userInstance);
+				const token = await module.exports.generateJwtToken(userInstance);
 
 				userAttributeInstance.last_login_at = new Date();
 				await userAttributeInstance.save();
@@ -166,7 +145,8 @@ module.exports = {
 				};
 
 				// Sending a success response
-				res.cookie('token', token, options)
+				res
+					.cookie('token', token, options)
 					.status(200)
 					.json({
 						success: true,
@@ -181,12 +161,11 @@ module.exports = {
 				});
 			}
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			res.status(500).json({
-				success: false,
-				message: `Login failure: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`Login failure: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -234,8 +213,7 @@ module.exports = {
 			else if (userAttributeInstance.email_verified) {
 				return res.status(200).json({
 					success: true,
-					message:
-						'Your email has been already verified. Please Login',
+					message: 'Your email has been already verified. Please Login',
 				});
 			} else {
 				// Using mongoose: change isVerified to true and mark active
@@ -259,12 +237,11 @@ module.exports = {
 				}
 			}
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			res.status(500).json({
-				success: false,
-				message: `Email Verification failed: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`Email Verification failed: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -342,12 +319,11 @@ module.exports = {
 				});
 			}
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			res.status(500).json({
-				success: false,
-				message: `Change Password failed: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`Change Password failed: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -399,7 +375,7 @@ module.exports = {
 			let resetToken = crypto.randomBytes(32).toString('hex');
 			const hash = await bcrypt.hash(
 				resetToken,
-				Number(process.env.BCRYPT_SALT),
+				Number(process.env.BCRYPT_SALT)
 			);
 
 			// save new token in database and send email
@@ -409,15 +385,7 @@ module.exports = {
 				createdAt: Date.now(),
 			}).save();
 
-			try {
-				await sendRequestResetPasswordEmail(
-					req,
-					userInstance,
-					resetToken,
-				);
-			} catch (error) {
-				throw error;
-			}
+			await sendRequestResetPasswordEmail(req, userInstance, resetToken);
 
 			// Sending a success response
 			res.status(200).json({
@@ -425,12 +393,11 @@ module.exports = {
 				message: 'Password reset link sent to your email account.',
 			});
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			res.status(500).json({
-				success: false,
-				message: `Forgot Password failed: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`Forgot Password failed: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -478,10 +445,7 @@ module.exports = {
 					message: 'Invalid or expired password reset token',
 				});
 			}
-			const isValid = await bcrypt.compare(
-				token,
-				resetPasswordToken.token,
-			);
+			const isValid = await bcrypt.compare(token, resetPasswordToken.token);
 			if (!isValid) {
 				return res.status(401).json({
 					success: false,
@@ -495,11 +459,7 @@ module.exports = {
 			userAttributeInstance.password_updated = new Date();
 			await userAttributeInstance.save();
 
-			try {
-				await sendResetPasswordEmail(req, userInstance);
-			} catch (error) {
-				throw error;
-			}
+			await sendResetPasswordEmail(req, userInstance);
 
 			// Sending a success response
 			res.status(200).json({
@@ -507,12 +467,11 @@ module.exports = {
 				message: 'Password reset sucessfully.',
 			});
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			res.status(500).json({
-				success: false,
-				message: `Forgot Password failed: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`Reset Password failed: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -547,12 +506,11 @@ module.exports = {
 				data: { user: userInstance },
 			});
 		} catch (error) {
-			// Logging & sending an error response
-			logger.error(error);
-			res.status(500).json({
-				success: false,
-				message: `Forgot Password failed: ${error.message}`,
-			});
+			return await module.exports.logError(
+				error,
+				`Forgot Password failed: ${error.message}`,
+				res
+			);
 		}
 	},
 
@@ -575,8 +533,7 @@ module.exports = {
 				var attributeObj = {
 					user_id: userInstance._id,
 				};
-				userAttributeInstance =
-					await UserAttribute.create(attributeObj);
+				userAttributeInstance = await UserAttribute.create(attributeObj);
 				userInstance.user_attribute_id = userAttributeInstance._id;
 				await userInstance.save();
 			}
@@ -600,14 +557,14 @@ module.exports = {
 		req,
 		res,
 		userInstance,
-		userAttributeInstance,
+		userAttributeInstance
 	) => {
 		if (!userAttributeInstance.email_verified) {
 			try {
 				const emailToken = await crypto.randomBytes(16).toString('hex');
 				userAttributeInstance.email_verify_token = emailToken;
 				if (await userAttributeInstance.save()) {
-					// await sendVerificationEmail(req, userInstance, userAttributeInstance);
+					await sendVerificationEmail(req, userInstance, userAttributeInstance);
 				}
 			} catch (error) {}
 			return res.status(401).json({
@@ -639,5 +596,45 @@ module.exports = {
 		} catch (error) {
 			throw error;
 		}
+	},
+
+	/**
+	 * Creates a new user using the provided input data.
+	 *
+	 * @param {Object} req - The request object containing the input data.
+	 * @param {Object} res - The response object to send the result to.
+	 * @return {Promise<Object>} A promise that resolves to the created user object.
+	 */
+	createUser: async (req, res) => {
+		// get input data
+		const { first_name, last_name, email, password, phone } = req.body;
+		const userData = {
+			first_name,
+			last_name,
+			email,
+			password,
+			phone,
+			role: 'User',
+		};
+
+		// Using mongoose: to create new user
+		return await User.create(userData);
+	},
+
+	/**
+	 * Logs an error and sends an error response.
+	 *
+	 * @param {Error} error - The error object to log.
+	 * @param {string} message - The error message to include in the response.
+	 * @param {Object} res - The response object to send the error response to.
+	 * @return {Promise<Object>} The error response object.
+	 */
+	logError: async (error, message, res) => {
+		// Logging & sending an error response
+		logger.error(error);
+		return res.status(500).json({
+			success: false,
+			message: message,
+		});
 	},
 };
