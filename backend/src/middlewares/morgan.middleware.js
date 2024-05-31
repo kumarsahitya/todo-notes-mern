@@ -16,10 +16,19 @@ const morganMiddleware = morgan(
 	// The message format is made from tokens, and each token is
 	// defined inside the Morgan library.
 	// You can create your custom token to show what do you want from a request.
-	'dev',
+	function (tokens, req, res) {
+		return JSON.stringify({
+			method: tokens.method(req, res),
+			url: tokens.url(req, res),
+			status: Number.parseFloat(tokens.status(req, res)),
+			content_length: tokens.res(req, res, 'content-length'),
+			response_time: Number.parseFloat(tokens['response-time'](req, res)),
+		});
+	},
+
 	// Options: in this case, I overwrote the stream and the skip logic.
 	// See the methods above.
-	{ stream, skip },
+	{ stream, skip }
 );
 
 module.exports = morganMiddleware;

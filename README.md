@@ -30,10 +30,6 @@ $ \l
 ```bash
 # loginto nodejs/backend bash
 $ docker exec -it backend
-
-# run database migrate
-$ npx prisma migrate dev --name init
-
 ```
 ### Docker commands for build image and start
 ```bash

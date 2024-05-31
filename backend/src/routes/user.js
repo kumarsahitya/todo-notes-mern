@@ -19,7 +19,6 @@ const {
 	resetPassword,
 	profile,
 } = require('../controllers/user'); // API created using mongoose
-// const { login, signup, confirmation } = require("../controllers/prisma/auth"); // API created using prisma
 const { auth, isUser, isAdmin } = require('../middlewares/authMiddle');
 
 router.post('/login', loginRules, login);
