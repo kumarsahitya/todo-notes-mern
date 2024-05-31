@@ -54,8 +54,10 @@ module.exports = {
 			userAttributeInstance.email_verify_token = emailToken;
 			await userAttributeInstance.save();
 
-			// sending email for verification
+			userInstance = userInstance.toObject();
 			userInstance.password = undefined;
+
+			// sending email for verification
 			try {
 				if (
 					await sendVerificationEmail(
@@ -153,9 +155,10 @@ module.exports = {
 				const token =
 					await module.exports.generateJwtToken(userInstance);
 
-				userInstance = userInstance.toObject();
 				userAttributeInstance.last_login_at = new Date();
 				await userAttributeInstance.save();
+
+				userInstance = userInstance.toObject();
 				userInstance.password = undefined;
 				const options = {
 					expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
@@ -534,6 +537,7 @@ module.exports = {
 					message: 'You have to Signup First',
 				});
 			}
+			userInstance = userInstance.toObject();
 			userInstance.password = undefined;
 
 			// Sending a success response

@@ -10,11 +10,8 @@ module.exports = {
 	 */
 	connect: () => {
 		mongoose
-			.connect(process.env.MONGODB_URL, {
-				useNewUrlParser: true,
-				useUnifiedTopology: true,
-			})
-			.then(() => logger.info('Server StartedDB Connected Successfully.'))
+			.connect(process.env.MONGODB_URL)
+			.then(() => logger.info('DB Connected Successfully.'))
 			.catch((error) => {
 				logger.error('this error occured' + error);
 				process.exit(1);

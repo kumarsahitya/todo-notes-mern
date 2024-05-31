@@ -1,5 +1,9 @@
 const express = require('express');
 const app = express();
+const morganMiddleware = require('./src/middlewares/morgan.middleware');
+
+// The morgan middleware does not need this.
+// This is for a manual log
 const logger = require('./src/helpers/logger');
 
 require('dotenv').config();
@@ -18,6 +22,7 @@ app.use((req, res, next) => {
 	);
 	next();
 });
+app.use(morganMiddleware);
 
 // calling database connection function
 require('./src/configs/mongodb').connect();
