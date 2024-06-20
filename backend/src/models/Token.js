@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const TokenSchema = new mongoose.Schema({
 	userId: {
@@ -16,4 +16,4 @@ const TokenSchema = new mongoose.Schema({
 		expires: 3600, // this is the expiry time in seconds
 	},
 });
-module.exports = mongoose.model('Token', TokenSchema);
+export default mongoose.model('Token', TokenSchema);

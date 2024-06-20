@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const NoteSchema = new mongoose.Schema({
 	title: { type: String, required: true, default: '', trim: true },
@@ -11,4 +11,4 @@ const NoteSchema = new mongoose.Schema({
 	note_attribute_id: { type: mongoose.Schema.ObjectId, ref: 'NoteAttribute' },
 });
 
-module.exports = mongoose.model('Note', NoteSchema);
+export default mongoose.model('Note', NoteSchema);

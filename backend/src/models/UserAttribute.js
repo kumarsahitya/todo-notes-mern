@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const UserAttributeSchema = new mongoose.Schema({
 	user_id: { type: mongoose.Schema.ObjectId, ref: 'User' },
@@ -14,4 +14,4 @@ const UserAttributeSchema = new mongoose.Schema({
 	last_login_at: { type: Date, default: null },
 });
 
-module.exports = mongoose.model('UserAttribute', UserAttributeSchema);
+export default mongoose.model('UserAttribute', UserAttributeSchema);

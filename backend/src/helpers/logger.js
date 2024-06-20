@@ -1,5 +1,5 @@
-const winston = require('winston');
-const DailyRotateFile = require('winston-daily-rotate-file');
+import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 // Define your severity levels.
 // With them, You can create log files,
@@ -67,4 +67,4 @@ const logger = winston.createLogger({
 	],
 });
 
-module.exports = logger;
+export default logger;

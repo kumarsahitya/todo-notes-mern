@@ -1,19 +1,21 @@
-const bcrypt = require('bcrypt');
-const User = require('../models/User');
-const Token = require('../models/Token');
-const UserAttribute = require('../models/UserAttribute');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const { validationResult } = require('express-validator');
-const {
+import bcrypt from 'bcrypt';
+import User from '../models/User';
+import Token from '../models/Token';
+import UserAttribute from '../models/UserAttribute';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { validationResult } from 'express-validator';
+
+import {
 	sendVerificationEmail,
 	sendRequestResetPasswordEmail,
 	sendResetPasswordEmail,
-} = require('./traits/user');
-const logger = require('../helpers/logger');
+} from './traits/user';
+
+import logger from '../helpers/logger';
 require('dotenv').config();
 
-module.exports = {
+export default {
 	/**
 	 * Handles the signup process for a new user.
 	 *
@@ -31,9 +33,9 @@ module.exports = {
 				});
 			}
 
-			let userInstance = await module.exports.createUser(req);
+			let userInstance = await createUser(req);
 			let userAttributeInstance =
-				await module.exports.createUserAttributeInstance(userInstance);
+				await createUserAttributeInstance(userInstance);
 			const emailToken = await crypto.randomBytes(16).toString('hex');
 			userAttributeInstance.email_verify_token = emailToken;
 			await userAttributeInstance.save();
@@ -44,7 +46,11 @@ module.exports = {
 			// sending email for verification
 			try {
 				if (
-					await sendVerificationEmail(req, userInstance, userAttributeInstance)
+					await sendVerificationEmail(
+						req,
+						userInstance,
+						userAttributeInstance,
+					)
 				) {
 					return res.status(200).json({
 						success: true,
@@ -53,10 +59,10 @@ module.exports = {
 					});
 				}
 			} catch (error) {
-				return await module.exports.logError(
+				return await logError(
 					error,
 					`Error occurred while sending email: ${error.message}`,
-					res
+					res,
 				);
 			}
 
@@ -67,10 +73,10 @@ module.exports = {
 				data: { user: userInstance },
 			});
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`User registration failed: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -118,21 +124,21 @@ module.exports = {
 			}
 
 			let userAttributeInstance =
-				await module.exports.createUserAttributeInstance(userInstance);
+				await createUserAttributeInstance(userInstance);
 
 			if (!userAttributeInstance.email_verified) {
-				return await module.exports.sendVerificationEmailIfNotVerified(
+				return await sendVerificationEmailIfNotVerified(
 					req,
 					res,
 					userInstance,
-					userAttributeInstance
+					userAttributeInstance,
 				);
 			}
 			// verify password and generate a JWt token 🔎
 			if (await bcrypt.compare(password, userInstance.password)) {
 				// if password matched
 				// now lets create a JWT token
-				const token = await module.exports.generateJwtToken(userInstance);
+				const token = await generateJwtToken(userInstance);
 
 				userAttributeInstance.last_login_at = new Date();
 				await userAttributeInstance.save();
@@ -145,8 +151,7 @@ module.exports = {
 				};
 
 				// Sending a success response
-				res
-					.cookie('token', token, options)
+				res.cookie('token', token, options)
 					.status(200)
 					.json({
 						success: true,
@@ -161,10 +166,10 @@ module.exports = {
 				});
 			}
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`Login failure: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -213,7 +218,8 @@ module.exports = {
 			else if (userAttributeInstance.email_verified) {
 				return res.status(200).json({
 					success: true,
-					message: 'Your email has been already verified. Please Login',
+					message:
+						'Your email has been already verified. Please Login',
 				});
 			} else {
 				// Using mongoose: change isVerified to true and mark active
@@ -237,10 +243,10 @@ module.exports = {
 				}
 			}
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`Email Verification failed: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -281,7 +287,7 @@ module.exports = {
 			}
 
 			let userAttributeInstance =
-				await module.exports.createUserAttributeInstance(userInstance);
+				await createUserAttributeInstance(userInstance);
 
 			// validate user is active and verified email
 			if (!userInstance.active) {
@@ -319,10 +325,10 @@ module.exports = {
 				});
 			}
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`Change Password failed: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -375,7 +381,7 @@ module.exports = {
 			let resetToken = crypto.randomBytes(32).toString('hex');
 			const hash = await bcrypt.hash(
 				resetToken,
-				Number(process.env.BCRYPT_SALT)
+				Number(process.env.BCRYPT_SALT),
 			);
 
 			// save new token in database and send email
@@ -393,10 +399,10 @@ module.exports = {
 				message: 'Password reset link sent to your email account.',
 			});
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`Forgot Password failed: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -435,7 +441,7 @@ module.exports = {
 			}
 
 			let userAttributeInstance =
-				await module.exports.createUserAttributeInstance(userInstance);
+				await createUserAttributeInstance(userInstance);
 
 			// fetch token by userId and validate it
 			let resetPasswordToken = await Token.findOne({ userId });
@@ -445,7 +451,10 @@ module.exports = {
 					message: 'Invalid or expired password reset token',
 				});
 			}
-			const isValid = await bcrypt.compare(token, resetPasswordToken.token);
+			const isValid = await bcrypt.compare(
+				token,
+				resetPasswordToken.token,
+			);
 			if (!isValid) {
 				return res.status(401).json({
 					success: false,
@@ -467,10 +476,10 @@ module.exports = {
 				message: 'Password reset sucessfully.',
 			});
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`Reset Password failed: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -506,10 +515,10 @@ module.exports = {
 				data: { user: userInstance },
 			});
 		} catch (error) {
-			return await module.exports.logError(
+			return await logError(
 				error,
 				`Forgot Password failed: ${error.message}`,
-				res
+				res,
 			);
 		}
 	},
@@ -533,7 +542,8 @@ module.exports = {
 				var attributeObj = {
 					user_id: userInstance._id,
 				};
-				userAttributeInstance = await UserAttribute.create(attributeObj);
+				userAttributeInstance =
+					await UserAttribute.create(attributeObj);
 				userInstance.user_attribute_id = userAttributeInstance._id;
 				await userInstance.save();
 			}
@@ -557,14 +567,18 @@ module.exports = {
 		req,
 		res,
 		userInstance,
-		userAttributeInstance
+		userAttributeInstance,
 	) => {
 		if (!userAttributeInstance.email_verified) {
 			try {
 				const emailToken = await crypto.randomBytes(16).toString('hex');
 				userAttributeInstance.email_verify_token = emailToken;
 				if (await userAttributeInstance.save()) {
-					await sendVerificationEmail(req, userInstance, userAttributeInstance);
+					await sendVerificationEmail(
+						req,
+						userInstance,
+						userAttributeInstance,
+					);
 				}
 			} catch (error) {}
 			return res.status(401).json({

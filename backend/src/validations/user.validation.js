@@ -1,6 +1,6 @@
-const Models = require('../models');
-const { body, param } = require('express-validator');
-const ObjectId = require('mongodb').ObjectId;
+import Models from '../models';
+import { body, param } from 'express-validator';
+import { ObjectId } from 'mongodb';
 
 const singupRules = [
 	body('first_name')
@@ -128,7 +128,7 @@ const resetPasswordRules = [
 		}),
 ];
 
-module.exports = {
+export default {
 	singupRules,
 	loginRules,
 	confirmationRules,

@@ -1,11 +1,11 @@
-const jwt = require('jsonwebtoken');
-const logger = require('../helpers/logger');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import logger from '../helpers/logger';
+import User from '../models/User';
 require('dotenv').config();
 
 // auth, isUser, isAdmin
 
-module.exports = {
+export default {
 	/**
 	 * Middleware function to authenticate the user.
 	 *

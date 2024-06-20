@@ -1,9 +1,15 @@
-const User = require('./User');
-const Token = require('./Token');
-const UserAttribute = require('./UserAttribute');
+import Note from './Note';
+import NoteAttribute from './NoteAttribute';
+import Tag from './Tag';
+import Token from './Token';
+import User from './User';
+import UserAttribute from './UserAttribute';
 
-module.exports = {
-	User,
+export default {
+	Note,
+	NoteAttribute,
+	Tag,
 	Token,
+	User,
 	UserAttribute,
 };

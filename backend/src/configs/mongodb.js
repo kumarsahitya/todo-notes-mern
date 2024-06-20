@@ -1,8 +1,9 @@
-const mongoose = require('mongoose');
-const logger = require('../helpers/logger');
+import mongoose from 'mongoose';
+import logger from '../helpers/logger';
 
 require('dotenv').config();
-module.exports = {
+
+export default {
 	/**
 	 * Connects to the MongoDB database using the provided MongoDB URL.
 	 *

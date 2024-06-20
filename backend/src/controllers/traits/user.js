@@ -1,9 +1,9 @@
-const logger = require('../../helpers/logger');
-const mailSender = require('../../utils/mailSender');
+import logger from '../../helpers/logger';
+import mailSender from '../../utils/mailSender';
 
 require('dotenv').config();
 
-module.exports = {
+export default {
 	/**
 	 * Sends a verification email to the user.
 	 *

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const TagSchema = new mongoose.Schema({
 	name: { type: String, required: true, default: '', trim: true },
@@ -8,4 +8,4 @@ const TagSchema = new mongoose.Schema({
 	deleted_at: { type: Date, default: null },
 });
 
-module.exports = mongoose.model('Tag', TagSchema);
+export const Tag = mongoose.model('Tag', TagSchema);

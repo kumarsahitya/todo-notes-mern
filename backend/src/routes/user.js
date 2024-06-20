@@ -1,16 +1,17 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const {
+
+import {
 	singupRules,
 	loginRules,
 	confirmationRules,
 	changePasswordRules,
 	forgotPasswordRules,
 	resetPasswordRules,
-} = require('../validations/user.validation');
+} from '../validations/user.validation';
 
 // Handlers from controllers
-const {
+import {
 	login,
 	signup,
 	confirmation,
@@ -18,8 +19,9 @@ const {
 	forgotPassword,
 	resetPassword,
 	profile,
-} = require('../controllers/user'); // API created using mongoose
-const { auth, isUser, isAdmin } = require('../middlewares/authMiddle');
+} from '../controllers/user'; // API created using mongoose
+
+import { auth, isUser, isAdmin } from '../middlewares/authMiddle';
 
 router.post('/login', loginRules, login);
 router.post('/signup', singupRules, signup);
@@ -51,4 +53,4 @@ router.get('/admin', auth, isAdmin, (req, res) => {
 	});
 });
 
-module.exports = router;
+export default router;

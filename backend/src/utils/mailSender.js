@@ -1,8 +1,8 @@
-const express = require('express');
-const nodemailer = require('nodemailer');
-const hbs = require('nodemailer-express-handlebars');
-const path = require('path');
-const logger = require('../helpers/logger');
+import express from 'express';
+import nodemailer from 'nodemailer';
+import hbs from 'nodemailer-express-handlebars';
+import path from 'path';
+import logger from '../helpers/logger';
 const viewPath = path.resolve(__dirname, '../templates/views/');
 const partialsPath = path.resolve(__dirname, '../templates/partials');
 
@@ -55,4 +55,4 @@ const mailSender = async (email, title, template, data = {}) => {
 	}
 };
 
-module.exports = mailSender;
+export default mailSender;
