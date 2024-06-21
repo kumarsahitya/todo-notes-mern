@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import logger from '../helpers/logger';
-
-require('dotenv').config();
+import logger from '../helpers/logger.js';
+import dotenv from 'dotenv'
+dotenv.config();
 
 export default {
 	/**

@@ -1,52 +1,54 @@
 import express from 'express';
 const router = express.Router();
 
-import {
-	singupRules,
-	loginRules,
-	confirmationRules,
-	changePasswordRules,
-	forgotPasswordRules,
-	resetPasswordRules,
-} from '../validations/user.validation';
+import validation from '../validations/user.validation.js';
 
 // Handlers from controllers
-import {
-	login,
-	signup,
-	confirmation,
-	changePassword,
-	forgotPassword,
-	resetPassword,
-	profile,
-} from '../controllers/user'; // API created using mongoose
+import user from '../controllers/user.js'; // API created using mongoose
 
-import { auth, isUser, isAdmin } from '../middlewares/authMiddle';
+import authMiddle from '../middlewares/authMiddle.js';
 
-router.post('/login', loginRules, login);
-router.post('/signup', singupRules, signup);
-router.get('/confirmation/:email/:token', confirmationRules, confirmation);
-router.post('/forgotPassword', forgotPasswordRules, forgotPassword);
-router.post('/resetPassword', resetPasswordRules, resetPassword);
-router.post('/changePassword', auth, changePasswordRules, changePassword);
-router.get('/profile', auth, profile);
+router.post('/login', validation.loginRules, user.login);
+router.post('/signup', validation.singupRules, user.signup);
+router.get(
+	'/confirmation/:email/:token',
+	validation.confirmationRules,
+	user.confirmation
+);
+router.post(
+	'/forgotPassword',
+	validation.forgotPasswordRules,
+	user.forgotPassword
+);
+router.post(
+	'/resetPassword',
+	validation.resetPasswordRules,
+	user.resetPassword
+);
+router.post(
+	'/changePassword',
+	authMiddle.auth,
+	validation.changePasswordRules,
+	user.changePassword
+);
+router.get('/profile', authMiddle.auth, user.profile);
 
 // testing protected route
-router.get('/test', auth, (req, res) => {
+router.get('/test', authMiddle.auth, (req, res) => {
 	res.json({
 		success: true,
 		message: 'You are a valid Tester.',
 	});
 });
 // protected routes
-router.get('/user', auth, isUser, (req, res) => {
+router.get('/user', authMiddle.auth, authMiddle.isUser, (req, res) => {
 	res.json({
 		success: true,
 		message: 'You are a valid Student.',
 	});
 });
 
-router.get('/admin', auth, isAdmin, (req, res) => {
+router.get('/admin', authMiddle.auth, authMiddle.isAdmin, (req, res) => {
 	res.json({
 		success: true,
 		message: 'You are a valid Admin.',

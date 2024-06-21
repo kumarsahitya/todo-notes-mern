@@ -1,4 +1,4 @@
-import Models from '../models';
+import Models from '../models/index.js';
 import { body, param } from 'express-validator';
 import { ObjectId } from 'mongodb';
 

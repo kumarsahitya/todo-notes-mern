@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
-import logger from '../helpers/logger';
-import User from '../models/User';
-require('dotenv').config();
+import logger from '../helpers/logger.js';
+import User from '../models/User.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // auth, isUser, isAdmin
 

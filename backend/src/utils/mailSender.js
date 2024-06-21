@@ -1,12 +1,19 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import hbs from 'nodemailer-express-handlebars';
 import path from 'path';
-import logger from '../helpers/logger';
+import logger from '../helpers/logger.js';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const viewPath = path.resolve(__dirname, '../templates/views/');
 const partialsPath = path.resolve(__dirname, '../templates/partials');
 
-require('dotenv').config();
+dotenv.config();
+
 const mailSender = async (email, title, template, data = {}) => {
 	try {
 		// to send email ->  firstly create a Transporter
@@ -30,7 +37,7 @@ const mailSender = async (email, title, template, data = {}) => {
 				},
 				viewPath,
 				extName: '.handlebars',
-			}),
+			})
 		);
 
 		// now Send e-mails to users

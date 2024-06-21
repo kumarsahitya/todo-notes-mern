@@ -1,12 +1,14 @@
-const express = require('express');
+import express from 'express';
+import dotenv from 'dotenv'
+import mongodb from './src/configs/mongodb.js';
 const app = express();
-const morganMiddleware = require('./src/middlewares/morgan.middleware');
+import morganMiddleware from './src/middlewares/morganMiddleware.js';
 
 // The morgan middleware does not need this.
 // This is for a manual log
-const logger = require('./src/helpers/logger');
+import logger from './src/helpers/logger.js';
 
-require('dotenv').config();
+dotenv.config();
 const PORT = process.env.PORT || 4000;
 
 // json
@@ -25,11 +27,10 @@ app.use((req, res, next) => {
 app.use(morganMiddleware);
 
 // calling database connection function
-require('./src/configs/mongodb').connect();
+mongodb.connect();
 
 // route importing and mounting
-const user = require('./src/routes/user');
-app.use('/api/v1/auth', user);
+import user from './src/routes/user.js';
 
 // test api
 app.get('/test', (req, res) => {

@@ -8,4 +8,6 @@ const TagSchema = new mongoose.Schema({
 	deleted_at: { type: Date, default: null },
 });
 
-export const Tag = mongoose.model('Tag', TagSchema);
+const Tag = mongoose.model('Tag', TagSchema);
+
+export default Tag;

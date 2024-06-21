@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
-import User from '../models/User';
-import Token from '../models/Token';
-import UserAttribute from '../models/UserAttribute';
+import dotenv from 'dotenv';
+import User from '../models/User.js';
+import Token from '../models/Token.js';
+import UserAttribute from '../models/UserAttribute.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { validationResult } from 'express-validator';
@@ -10,10 +11,10 @@ import {
 	sendVerificationEmail,
 	sendRequestResetPasswordEmail,
 	sendResetPasswordEmail,
-} from './traits/user';
+} from './traits/user.js';
 
-import logger from '../helpers/logger';
-require('dotenv').config();
+import logger from '../helpers/logger.js';
+dotenv.config();
 
 export default {
 	/**
@@ -46,11 +47,7 @@ export default {
 			// sending email for verification
 			try {
 				if (
-					await sendVerificationEmail(
-						req,
-						userInstance,
-						userAttributeInstance,
-					)
+					await sendVerificationEmail(req, userInstance, userAttributeInstance)
 				) {
 					return res.status(200).json({
 						success: true,
@@ -62,7 +59,7 @@ export default {
 				return await logError(
 					error,
 					`Error occurred while sending email: ${error.message}`,
-					res,
+					res
 				);
 			}
 
@@ -76,7 +73,7 @@ export default {
 			return await logError(
 				error,
 				`User registration failed: ${error.message}`,
-				res,
+				res
 			);
 		}
 	},
@@ -131,7 +128,7 @@ export default {
 					req,
 					res,
 					userInstance,
-					userAttributeInstance,
+					userAttributeInstance
 				);
 			}
 			// verify password and generate a JWt token 🔎
@@ -151,7 +148,8 @@ export default {
 				};
 
 				// Sending a success response
-				res.cookie('token', token, options)
+				res
+					.cookie('token', token, options)
 					.status(200)
 					.json({
 						success: true,
@@ -166,11 +164,7 @@ export default {
 				});
 			}
 		} catch (error) {
-			return await logError(
-				error,
-				`Login failure: ${error.message}`,
-				res,
-			);
+			return await logError(error, `Login failure: ${error.message}`, res);
 		}
 	},
 
@@ -218,8 +212,7 @@ export default {
 			else if (userAttributeInstance.email_verified) {
 				return res.status(200).json({
 					success: true,
-					message:
-						'Your email has been already verified. Please Login',
+					message: 'Your email has been already verified. Please Login',
 				});
 			} else {
 				// Using mongoose: change isVerified to true and mark active
@@ -246,7 +239,7 @@ export default {
 			return await logError(
 				error,
 				`Email Verification failed: ${error.message}`,
-				res,
+				res
 			);
 		}
 	},
@@ -328,7 +321,7 @@ export default {
 			return await logError(
 				error,
 				`Change Password failed: ${error.message}`,
-				res,
+				res
 			);
 		}
 	},
@@ -381,7 +374,7 @@ export default {
 			let resetToken = crypto.randomBytes(32).toString('hex');
 			const hash = await bcrypt.hash(
 				resetToken,
-				Number(process.env.BCRYPT_SALT),
+				Number(process.env.BCRYPT_SALT)
 			);
 
 			// save new token in database and send email
@@ -402,7 +395,7 @@ export default {
 			return await logError(
 				error,
 				`Forgot Password failed: ${error.message}`,
-				res,
+				res
 			);
 		}
 	},
@@ -451,10 +444,7 @@ export default {
 					message: 'Invalid or expired password reset token',
 				});
 			}
-			const isValid = await bcrypt.compare(
-				token,
-				resetPasswordToken.token,
-			);
+			const isValid = await bcrypt.compare(token, resetPasswordToken.token);
 			if (!isValid) {
 				return res.status(401).json({
 					success: false,
@@ -479,7 +469,7 @@ export default {
 			return await logError(
 				error,
 				`Reset Password failed: ${error.message}`,
-				res,
+				res
 			);
 		}
 	},
@@ -518,7 +508,7 @@ export default {
 			return await logError(
 				error,
 				`Forgot Password failed: ${error.message}`,
-				res,
+				res
 			);
 		}
 	},
@@ -542,8 +532,7 @@ export default {
 				var attributeObj = {
 					user_id: userInstance._id,
 				};
-				userAttributeInstance =
-					await UserAttribute.create(attributeObj);
+				userAttributeInstance = await UserAttribute.create(attributeObj);
 				userInstance.user_attribute_id = userAttributeInstance._id;
 				await userInstance.save();
 			}
@@ -567,18 +556,14 @@ export default {
 		req,
 		res,
 		userInstance,
-		userAttributeInstance,
+		userAttributeInstance
 	) => {
 		if (!userAttributeInstance.email_verified) {
 			try {
 				const emailToken = await crypto.randomBytes(16).toString('hex');
 				userAttributeInstance.email_verify_token = emailToken;
 				if (await userAttributeInstance.save()) {
-					await sendVerificationEmail(
-						req,
-						userInstance,
-						userAttributeInstance,
-					);
+					await sendVerificationEmail(req, userInstance, userAttributeInstance);
 				}
 			} catch (error) {}
 			return res.status(401).json({
